@@ -52,3 +52,7 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.14.3'
 }
 
+task runInstrumentedTests(type: Exec) {
+    // 테스트 실행 태스크 정의
+    commandLine 'adb', 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.example.uiautomator.uiAutomatoerTest', 'com.example.uiautomator.test/androidx.test.runner.AndroidJUnitRunner'
+}
