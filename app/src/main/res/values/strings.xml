@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">uiautomator</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="service_description">uiautomator</string>
+    <!-- 기존 다른 스트링 리소스들 -->
+</resources>
