@@ -1,9 +1,13 @@
 package com.example.uiautomator;
 
 
+import static androidx.test.InstrumentationRegistry.getContext;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import android.content.Intent;
 import android.graphics.Rect;
+import android.net.Uri;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -16,6 +20,7 @@ import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -24,18 +29,36 @@ import java.util.Random;
 
 @RunWith(AndroidJUnit4.class)
 public class uiAutoMator {
+    private UiDevice device;
+
+    @Before
+    public void setUp() {
+        device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+    }
+
+    // MainActivity를 실행하는 메서드
+    private void launchMainActivity() {
+        Uri webPage = Uri.parse("https://www.youtube.com/results?search_query=실시간 바카라");
+        Intent intent = new Intent(Intent.ACTION_VIEW, webPage);
+        intent.setPackage("com.google.android.youtube");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // FLAG_ACTIVITY_NEW_TASK 플래그 추가
+
+        // Intent를 실행하여 YouTube 앱을 시작
+        getContext().startActivity(intent);
+    }
     @Test
     public void playFirstVideoAfterDelay() throws InterruptedException {
 
-        // UiDevice 인스턴스 가져오기
-        UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        // MainActivity 실행
+        launchMainActivity();
+
         // UiScrollable 인스턴스 생성
         UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
 
         // 랜덤 객체 생성
         Random random = new Random();
         try {
-            // 2에서 5 사이의 랜덤한 숫자 생성
+
             int randomScrollCount = random.nextInt(4) + 2; // 0~3의 랜덤값에 2를 더함
 
             // 랜덤한 횟수만큼 스크롤 수행
