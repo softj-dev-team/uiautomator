@@ -37,8 +37,8 @@ public class uiAutoMator {
     }
 
     // MainActivity를 실행하는 메서드
-    private void launchMainActivity() {
-        Uri webPage = Uri.parse("https://www.youtube.com/results?search_query=실시간 바카라");
+    private void launchMainActivity(String keyword) {
+        Uri webPage = Uri.parse("https://www.youtube.com/results?search_query=" + keyword);
         Intent intent = new Intent(Intent.ACTION_VIEW, webPage);
         intent.setPackage("com.google.android.youtube");
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // FLAG_ACTIVITY_NEW_TASK 플래그 추가
@@ -48,10 +48,11 @@ public class uiAutoMator {
     }
     @Test
     public void playFirstVideoAfterDelay() throws InterruptedException {
-
+        //최초 검색시
+        String keyword ="실시간 바카라";
         // MainActivity 실행
-        launchMainActivity();
-
+        launchMainActivity(keyword);
+        Thread.sleep(1000);
         // UiScrollable 인스턴스 생성
         UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
 
@@ -75,6 +76,33 @@ public class uiAutoMator {
                     if (bounds.width() >= 500 && bounds.height() >= 500) {
                         device.click(bounds.centerX(), bounds.centerY());
                         found = true;
+                        // 랜덤한 대기 시간(초) 생성 (예: 1부터 5초 사이의 랜덤한 대기 시간)
+                        int randomWaitTimeInSeconds = random.nextInt(30) + 20;
+                        // 생성된 랜덤 대기 시간(초)만큼 대기
+                        Thread.sleep(randomWaitTimeInSeconds * 1000);
+
+                        String inputString ="[바카라 실시간] 바카라교수 승부를 채우는요건은 무엇입니까? #바카라 #바카라실시간 -  -  - SONIA MEDIA - 803 watching - play video";
+
+                        // 공백과 특수 문자를 제거한 문자열 생성
+                        String cleanedString = inputString.replaceAll("[^a-zA-Z0-9가-힣]", "");
+
+                        // "SONIA MEDIA"를 포함하는지 확인
+                        int index = cleanedString.indexOf("SONIAMEDIA");
+
+                        if (index != -1) {
+                            // "SONIA MEDIA"를 포함하면 해당 부분 이전까지의 문자열을 추출
+                            String resultString = inputString.substring(0, index);
+
+                            // 결과 출력
+                            System.out.println(resultString);
+                        } else {
+                            // "SONIA MEDIA"를 포함하지 않으면 원래 문자열을 그대로 출력
+                            System.out.println(inputString);
+                        }
+
+                        // 다시검색
+//                        launchMainActivity(keyword);
+
                         break;
                     }
                 }

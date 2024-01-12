@@ -54,7 +54,7 @@ dependencies {
 
 task runInstrumentedTests(type: Exec) {
     // 원격지 디바이스의 IP 주소를 여기에 입력
-    def remoteDeviceIpAddress = '58.238.223.169'
+    def remoteDeviceIpAddress = '192.168.75.196:42039'
     // 디바이스의 시리얼 번호를 여기에 입력
     def deviceSerialNumber = 'R3CR3004EBJ'
     // 원격지 디바이스에 연결하는 명령어
@@ -62,5 +62,5 @@ task runInstrumentedTests(type: Exec) {
     // 테스트 실행 태스크 정의
 //    commandLine 'adb', 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.example.uiautomator.uiAutoMator', 'com.example.uiautomator.test/androidx.test.runner.AndroidJUnitRunner'
 
-    commandLine 'adb', '-s', deviceSerialNumber, 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.example.uiautomator.uiAutoMator', 'com.example.uiautomator.test/androidx.test.runner.AndroidJUnitRunner'
+    commandLine 'adb', '-s', remoteDeviceIpAddress, 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.example.uiautomator.uiAutoMator', 'com.example.uiautomator.test/androidx.test.runner.AndroidJUnitRunner'
 }
