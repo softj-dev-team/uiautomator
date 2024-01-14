@@ -1,20 +1,17 @@
 package com.example.uiautomator;
 
-
 import static androidx.test.InstrumentationRegistry.getContext;
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.net.Uri;
-import android.provider.Settings;
-import android.util.Log;
+import android.os.RemoteException;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
-import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiScrollable;
@@ -24,6 +21,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -36,73 +35,156 @@ public class uiAutoMator {
         device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
     }
 
-    // MainActivity를 실행하는 메서드
-    private void launchMainActivity(String keyword) {
-        Uri webPage = Uri.parse("https://www.youtube.com/results?search_query=" + keyword);
-        Intent intent = new Intent(Intent.ACTION_VIEW, webPage);
-        intent.setPackage("com.google.android.youtube");
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // FLAG_ACTIVITY_NEW_TASK 플래그 추가
 
-        // Intent를 실행하여 YouTube 앱을 시작
-        getContext().startActivity(intent);
-    }
+
     @Test
     public void playFirstVideoAfterDelay() throws InterruptedException {
-        //최초 검색시
-        String keyword ="실시간 바카라";
-        // MainActivity 실행
-        launchMainActivity(keyword);
-        Thread.sleep(1000);
-        // UiScrollable 인스턴스 생성
-        UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
-
-        // 랜덤 객체 생성
-        Random random = new Random();
         try {
-
-            int randomScrollCount = random.nextInt(4) + 2; // 0~3의 랜덤값에 2를 더함
-
-            // 랜덤한 횟수만큼 스크롤 수행
-            for (int i = 0; i < randomScrollCount; i++) {
-                scrollable.scrollForward();
-                Thread.sleep(1000); // 스크롤 사이에 잠시 대기
+            closeApp("com.google.android.youtube");
+            // 최초 검색시
+            String keyword = "실시간 바카라";
+            // MainActivity 실행
+            launchMainActivity(keyword);
+            // 앱이 열릴 때까지 1초마다 확인 (최대 10번)
+            for (int i = 0; i < 3; i++) {
+                if (isAppOpen("com.google.android.youtube")) {
+                    break; // 앱이 열려있으면 확인 중단
+                }
+                Thread.sleep(1000);
             }
-
             boolean found = false;
+            // UiScrollable 인스턴스 생성
+            UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
+
+
+            //헴버거메뉴 클릭
             while (!found) {
                 List<UiObject2> imageViews = device.findObjects(By.clazz(android.widget.ImageView.class));
+
                 for (UiObject2 imageView : imageViews) {
-                    Rect bounds = imageView.getVisibleBounds();
-                    if (bounds.width() >= 500 && bounds.height() >= 500) {
-                        device.click(bounds.centerX(), bounds.centerY());
+                    String contentDesc = imageView.getContentDescription();
+                    if (contentDesc != null && (contentDesc.contains("More options") || contentDesc.contains("옵션 더보기"))) {
+                        imageView.click();
                         found = true;
-                        // 랜덤한 대기 시간(초) 생성 (예: 1부터 5초 사이의 랜덤한 대기 시간)
-                        int randomWaitTimeInSeconds = random.nextInt(30) + 20;
-                        // 생성된 랜덤 대기 시간(초)만큼 대기
-                        Thread.sleep(randomWaitTimeInSeconds * 1000);
+                        break;
+                    }
+                }
 
-                        String inputString ="[바카라 실시간] 바카라교수 승부를 채우는요건은 무엇입니까? #바카라 #바카라실시간 -  -  - SONIA MEDIA - 803 watching - play video";
+                if (!found) {
+                    Thread.sleep(1000); // 요소를 찾지 못했을 때 잠시 대기 후 다시 시도
+                }
+            }
 
-                        // 공백과 특수 문자를 제거한 문자열 생성
-                        String cleanedString = inputString.replaceAll("[^a-zA-Z0-9가-힣]", "");
+            Thread.sleep(2000);
+            //루프 초기화
+            found = false;
+            //검색필터 클릭
+            while (!found) {
+                List<UiObject2> titles = device.findObjects(By.res("com.google.android.youtube:id/title"));
 
-                        // "SONIA MEDIA"를 포함하는지 확인
-                        int index = cleanedString.indexOf("SONIAMEDIA");
+                for (UiObject2 title : titles) {
+                    String titleText = title.getText();
+                    if ("검색 필터".equals(titleText) || "Search filters".equals(titleText)) {
+                        title.click();
+                        found = true;
+                        break;
+                    }
+                }
 
-                        if (index != -1) {
-                            // "SONIA MEDIA"를 포함하면 해당 부분 이전까지의 문자열을 추출
-                            String resultString = inputString.substring(0, index);
+                if (!found) {
+                    Thread.sleep(1000); // 요소를 찾지 못했을 때 잠시 대기 후 다시 시도
+                }
+            }
+            Thread.sleep(2000);
+            //루프 초기화
+            found = false;
+            //실시간 클릭
 
-                            // 결과 출력
-                            System.out.println(resultString);
-                        } else {
-                            // "SONIA MEDIA"를 포함하지 않으면 원래 문자열을 그대로 출력
-                            System.out.println(inputString);
-                        }
+            while (!found) {
+                List<UiObject2> titles = device.findObjects(By.res("com.google.android.youtube:id/text"));
 
-                        // 다시검색
-//                        launchMainActivity(keyword);
+                for (UiObject2 title : titles) {
+                    String titleText = title.getText();
+                    if ("실시간".equals(titleText)) {
+                        title.click();
+                        found = true;
+                        break;
+                    }
+                }
 
+                if (!found) {
+                    Thread.sleep(1000); // 요소를 찾지 못했을 때 잠시 대기 후 다시 시도
+                }
+            }
+            Thread.sleep(2000);
+            // 적용버튼 클릭
+            UiObject2 applyButton = device.findObject(By.res("com.google.android.youtube:id/apply"));
+            if (applyButton != null) {
+                applyButton.click();
+            }
+            Thread.sleep(2000);
+
+//            // 랜덤 객체 생성
+//            Random random = new Random();
+//            int randomScrollCount = random.nextInt(3) + 2; // 0~3의 랜덤값에 2를 더함
+//
+//            // 랜덤한 횟수만큼 스크롤 수행
+//            for (int i = 0; i < randomScrollCount; i++) {
+//                scrollable.scrollForward();
+//                Thread.sleep(1000); // 스크롤 사이에 잠시 대기
+//            }
+//            //루프 초기화
+//            found = false;
+//            while (!found) {
+//                List<UiObject2> imageViews = device.findObjects(By.clazz(android.widget.ImageView.class));
+//                for (UiObject2 imageView : imageViews) {
+//                    Rect bounds = imageView.getVisibleBounds();
+//                    if (bounds.width() >= 500 && bounds.height() >= 500) {
+//                        device.click(bounds.centerX(), bounds.centerY());
+//                        found = true; // found를 true로 설정
+//                        break; // for 루프를 빠져나옴
+//                    }
+//                }
+//                // found가 true이면 while 루프도 종료
+//                if (found) {
+//                    break;
+//                }
+//            }
+//            // 랜덤한 대기 시간(초) 생성 (예: 1부터 5초 사이의 랜덤한 대기 시간)
+//            int randomWaitTimeInSeconds = random.nextInt(30) + 20;
+//            // 생성된 랜덤 대기 시간 만큼 영상 시청
+//            Thread.sleep(randomWaitTimeInSeconds * 1000);
+//
+//            Thread.sleep(5000);
+//            closeApp("com.google.android.youtube");
+//            //다시검색
+//            launchMainActivity(keyword);
+//            //루프 초기화
+            found = false;
+            while (!found) {
+
+                List<String> contentDescList = new ArrayList<>();
+                List<UiObject2> viewGroups = device.findObjects(By.clazz(android.view.ViewGroup.class));
+                for (UiObject2 viewGroup : viewGroups) {
+                    String contentDesc = viewGroup.getContentDescription();
+                    if (contentDesc != null) {
+                        contentDescList.add(processContentDesc(contentDesc));
+                    }
+                }
+
+                for (String contentDesc : contentDescList) {
+                    String inputString = processContentDesc("[바카라 실시간]바카라 박프로1월 15일 바카라 1등 유튜버  한번믿어보세요!  #바카라 #바카라실시간");
+
+                    // 입력 문자열의 길이 계산
+                    int inputStringLength = inputString.length();
+
+                    // contentDesc 문자열을 입력 문자열의 길이만큼 추출
+                    String extractedContentDesc = contentDesc.substring(0, Math.min(contentDesc.length(), inputStringLength));
+
+                    // 추출된 문자열과 입력 문자열 비교
+                    if (inputString.equals(extractedContentDesc)) {
+                        viewGroups.get(contentDescList.indexOf(contentDesc)).click();
+                        found = true;
                         break;
                     }
                 }
@@ -117,6 +199,42 @@ public class uiAutoMator {
             }
 
         } catch (UiObjectNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+    // MainActivity를 실행하는 메서드
+    private void launchMainActivity(String keyword) {
+        Uri webPage = Uri.parse("https://www.youtube.com/results?search_query=" + keyword);
+        Intent intent = new Intent(Intent.ACTION_VIEW, webPage);
+        intent.setPackage("com.google.android.youtube");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // FLAG_ACTIVITY_NEW_TASK 플래그 추가
+
+        // Intent를 실행하여 YouTube 앱을 시작
+        getContext().startActivity(intent);
+    }
+    // content-desc와 inputString을 비교하는 메서드
+    private String processContentDesc(String contentDesc) {
+        // content-desc에서 특수 문자와 공백을 제거하고 [ 대괄호를 포함하여 반환
+        return contentDesc.replaceAll("[^a-zA-Z0-9가-힣\\[\\]]", "").replaceAll("\\[", "").replaceAll("\\]", "");
+    }
+    // 앱이 열려있는지 확인하는 메서드 추가
+    private boolean isAppOpen(String packageName) {
+        ActivityManager am = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> runningAppProcesses = am.getRunningAppProcesses();
+        if (runningAppProcesses != null) {
+            for (ActivityManager.RunningAppProcessInfo processInfo : runningAppProcesses) {
+                if (processInfo.processName.equals(packageName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    // 앱을 종료하는 메서드 추가
+    private void closeApp(String packageName) {
+        try {
+            device.executeShellCommand("am force-stop " + packageName);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
