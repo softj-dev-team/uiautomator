@@ -1,9 +1,11 @@
 package com.example.uiautomator;
-
+import android.graphics.Bitmap;
 import static androidx.test.InstrumentationRegistry.getContext;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.RemoteException;
@@ -11,6 +13,7 @@ import android.os.RemoteException;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.UiObjectNotFoundException;
@@ -21,6 +24,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +69,7 @@ public class uiAutoMator {
 
                 for (UiObject2 imageView : imageViews) {
                     String contentDesc = imageView.getContentDescription();
-                    if (contentDesc != null && (contentDesc.contains("More options") || contentDesc.contains("옵션 더보기"))) {
+                    if (contentDesc != null && (contentDesc.contains("옵션 더보기"))) {
                         imageView.click();
                         found = true;
                         break;
@@ -101,7 +107,7 @@ public class uiAutoMator {
             //실시간 클릭
 
             while (!found) {
-                List<UiObject2> titles = device.findObjects(By.res("com.google.android.youtube:id/text"));
+                List<UiObject2> titles = device.findObjects(By.clazz("android.widget.TextView"));
 
                 for (UiObject2 title : titles) {
                     String titleText = title.getText();
@@ -162,32 +168,66 @@ public class uiAutoMator {
 //            //루프 초기화
             found = false;
             while (!found) {
+                Thread.sleep(3000);
+                String inputString = processContentDesc("바카라실시간바카라샘");
+                // 입력 문자열의 길이 계산
+                int inputStringLength = inputString.length();
 
                 List<String> contentDescList = new ArrayList<>();
                 List<UiObject2> viewGroups = device.findObjects(By.clazz(android.view.ViewGroup.class));
                 for (UiObject2 viewGroup : viewGroups) {
-                    String contentDesc = viewGroup.getContentDescription();
-                    if (contentDesc != null) {
-                        contentDescList.add(processContentDesc(contentDesc));
+                    try {
+                        String contentDesc = viewGroup.getContentDescription();
+                        if (contentDesc != null) {
+                            String processContentDesc=  processContentDesc(contentDesc);
+                            // contentDesc 문자열을 입력 문자열의 길이만큼 추출
+                            String extractedContentDesc = processContentDesc.substring(0, Math.min(contentDesc.length(), inputStringLength));
+                            // 추출된 문자열과 입력 문자열 비교
+                            if (inputString.equals(extractedContentDesc)) {
+                                UiObject2 targetObject = viewGroup;
+                                // 요소의 위치 확인
+                                Rect bounds = targetObject.getVisibleBounds();
+
+                                // 화면의 크기 구하기
+                                int screenHeight = device.getDisplayHeight();
+                                int screenWidth = device.getDisplayWidth();
+
+                                // 화면의 수직 중앙 좌표 구하기
+                                int screenCenterY = screenHeight / 2;
+
+                                // 요소의 수직 중앙 좌표 구하기
+                                int centerY = (bounds.top + bounds.bottom) / 2;
+
+                                if (centerY < screenCenterY) {
+                                    // 요소가 화면 중앙보다 위에 있을 때
+                                    int scrollToY = screenCenterY - centerY;
+                                    device.swipe(bounds.centerX(), centerY, bounds.centerX(), centerY + scrollToY, 10); // 아래로 스와이프
+                                } else if (centerY > screenCenterY) {
+                                    // 요소가 화면 중앙보다 아래에 있을 때
+                                    int scrollToY = centerY - screenCenterY;
+                                    device.swipe(bounds.centerX(), centerY, bounds.centerX(), centerY - scrollToY, 10); // 위로 스와이프
+                                }
+
+                                Thread.sleep(3000);
+                                // 스크롤 후 요소의 위치 확인
+                                Rect finalBounds = targetObject.getVisibleBounds();
+                                // 요소의 중앙을 클릭
+                                int targetCenterX = (finalBounds.left + finalBounds.right) / 2;
+                                int targetCenterY = (finalBounds.top + finalBounds.bottom) / 2;
+                                device.click(targetCenterX, targetCenterY);
+
+                                found = true; // found를 true로 설정
+                                if (found) {
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        // getContentDescription()에서 발생하는 예외 처리
+                        e.printStackTrace();
                     }
                 }
 
-                for (String contentDesc : contentDescList) {
-                    String inputString = processContentDesc("[바카라 실시간]바카라 박프로1월 15일 바카라 1등 유튜버  한번믿어보세요!  #바카라 #바카라실시간");
-
-                    // 입력 문자열의 길이 계산
-                    int inputStringLength = inputString.length();
-
-                    // contentDesc 문자열을 입력 문자열의 길이만큼 추출
-                    String extractedContentDesc = contentDesc.substring(0, Math.min(contentDesc.length(), inputStringLength));
-
-                    // 추출된 문자열과 입력 문자열 비교
-                    if (inputString.equals(extractedContentDesc)) {
-                        viewGroups.get(contentDescList.indexOf(contentDesc)).click();
-                        found = true;
-                        break;
-                    }
-                }
 
                 if (!found) {
                     boolean canScrollMore = scrollable.scrollForward();
