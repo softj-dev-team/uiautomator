@@ -31,7 +31,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 @RunWith(AndroidJUnit4.class)
 public class uiAutoMator {
     private UiDevice device;
@@ -40,15 +45,13 @@ public class uiAutoMator {
     public void setUp() {
         device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
     }
-
-
-
     @Test
     public void playFirstVideoAfterDelay() throws InterruptedException {
         try {
             closeApp("com.google.android.youtube");
             // 최초 검색시
-            String keyword = "실시간 바카라";
+            String keyword = fetchKeywordFromServer(2);
+            Thread.sleep(3000);
             // MainActivity 실행
             launchMainActivity(keyword);
             // 앱이 열릴 때까지 1초마다 확인 (최대 10번)
@@ -169,11 +172,10 @@ public class uiAutoMator {
             found = false;
             while (!found) {
                 Thread.sleep(3000);
-                String inputString = processContentDesc("바카라실시간바카라샘");
+                String inputString = processContentDesc(fetchKeywordFromServer(1));
                 // 입력 문자열의 길이 계산
                 int inputStringLength = inputString.length();
 
-                List<String> contentDescList = new ArrayList<>();
                 List<UiObject2> viewGroups = device.findObjects(By.clazz(android.view.ViewGroup.class));
                 for (UiObject2 viewGroup : viewGroups) {
                     try {
@@ -276,6 +278,46 @@ public class uiAutoMator {
             device.executeShellCommand("am force-stop " + packageName);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+    // 서버에서 키워드를 가져오는 메서드
+    private String fetchKeywordFromServer(int inputNumber) {
+        try {
+            // 서버 URL 설정
+            String apiUrl = "https://esaydroid.softj.net/api/search-title/"+inputNumber;
+
+            // URL 객체 생성
+            URL url = new URL(apiUrl);
+
+            // HTTP 연결 설정
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            // Accept 헤더를 설정하여 JSON 형식의 응답을 요청
+            conn.setRequestProperty("Accept", "application/json");
+            // 연결 요청
+            conn.connect();
+
+            // 응답 데이터 읽기
+            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                response.append(line);
+            }
+
+            br.close();
+            conn.disconnect();
+
+            // JSON 응답 파싱
+            JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject();
+            String keyword = jsonObject.get("title").getAsString();
+
+            return keyword;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "기본 키워드"; // 에러 발생 시 기본 키워드 반환
         }
     }
 }
