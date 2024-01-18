@@ -47,19 +47,24 @@ public class uiAutoMator {
     }
     @Test
     public void playFirstVideoAfterDelay() throws InterruptedException {
-        int maxAttempts = 10;
+        int maxAttempts = 10;//루프횟수
         int attempts = 0;
         try {
             closeApp("com.google.android.youtube");
+            Thread.sleep(3000);
+            // MainActivity 실행
+            String keyword = fetchKeywordFromServer(2);
+            launchMainActivity(keyword);
+            Thread.sleep(3000);
+            // 최초 검색
+//                firstSearch();
+            // 최초 검색 및 필터 설정 수행
+            performSearchAndFilter();
             //루프 초기화
             boolean found = false;
             while (!found && attempts < maxAttempts) {
                 // UiScrollable 인스턴스 생성
                 UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
-                // 최초 검색
-//                firstSearch();
-                // 최초 검색 및 필터 설정 수행
-                performSearchAndFilter();
 
                 Thread.sleep(3000);
                 String inputString = processContentDesc(fetchKeywordFromServer(1));
@@ -306,10 +311,7 @@ public class uiAutoMator {
     }
     public void firstSearch() throws InterruptedException,UiObjectNotFoundException{
         try {
-            String keyword = fetchKeywordFromServer(2);
             Thread.sleep(3000);
-            // MainActivity 실행
-            launchMainActivity(keyword);
             // 랜덤 객체 생성
             Random random = new Random();
             int randomScrollCount = random.nextInt(3) + 2; // 0~3의 랜덤값에 2를 더함
