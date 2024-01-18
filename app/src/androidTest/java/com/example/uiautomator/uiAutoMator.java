@@ -47,134 +47,20 @@ public class uiAutoMator {
     }
     @Test
     public void playFirstVideoAfterDelay() throws InterruptedException {
+        int maxAttempts = 10;
+        int attempts = 0;
         try {
             closeApp("com.google.android.youtube");
-            // 최초 검색시
-            String keyword = fetchKeywordFromServer(2);
-            Thread.sleep(3000);
-            // MainActivity 실행
-            launchMainActivity(keyword);
-            // 앱이 열릴 때까지 1초마다 확인 (최대 10번)
-            for (int i = 0; i < 3; i++) {
-                if (isAppOpen("com.google.android.youtube")) {
-                    break; // 앱이 열려있으면 확인 중단
-                }
-                Thread.sleep(1000);
-            }
-
-            Thread.sleep(5000);
-
-
+            //루프 초기화
             boolean found = false;
-            // UiScrollable 인스턴스 생성
-            UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
+            while (!found && attempts < maxAttempts) {
+                // UiScrollable 인스턴스 생성
+                UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
+                // 최초 검색
+//                firstSearch();
+                // 최초 검색 및 필터 설정 수행
+                performSearchAndFilter();
 
-
-            //헴버거메뉴 클릭
-            while (!found) {
-                List<UiObject2> imageViews = device.findObjects(By.clazz(android.widget.ImageView.class));
-
-                for (UiObject2 imageView : imageViews) {
-                    String contentDesc = imageView.getContentDescription();
-                    if (contentDesc != null && (contentDesc.contains("옵션 더보기"))) {
-                        imageView.click();
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    Thread.sleep(1000); // 요소를 찾지 못했을 때 잠시 대기 후 다시 시도
-                }
-            }
-
-            Thread.sleep(2000);
-            //루프 초기화
-            found = false;
-            //검색필터 클릭
-            while (!found) {
-                List<UiObject2> titles = device.findObjects(By.res("com.google.android.youtube:id/title"));
-
-                for (UiObject2 title : titles) {
-                    String titleText = title.getText();
-                    if ("검색 필터".equals(titleText) || "Search filters".equals(titleText)) {
-                        title.click();
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    Thread.sleep(1000); // 요소를 찾지 못했을 때 잠시 대기 후 다시 시도
-                }
-            }
-            Thread.sleep(2000);
-            //루프 초기화
-            found = false;
-            //실시간 클릭
-
-            while (!found) {
-                List<UiObject2> titles = device.findObjects(By.clazz("android.widget.TextView"));
-
-                for (UiObject2 title : titles) {
-                    String titleText = title.getText();
-                    if ("실시간".equals(titleText)) {
-                        title.click();
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    Thread.sleep(1000); // 요소를 찾지 못했을 때 잠시 대기 후 다시 시도
-                }
-            }
-            Thread.sleep(2000);
-            // 적용버튼 클릭
-            UiObject2 applyButton = device.findObject(By.res("com.google.android.youtube:id/apply"));
-            if (applyButton != null) {
-                applyButton.click();
-            }
-            Thread.sleep(2000);
-
-//            // 랜덤 객체 생성
-//            Random random = new Random();
-//            int randomScrollCount = random.nextInt(3) + 2; // 0~3의 랜덤값에 2를 더함
-//
-//            // 랜덤한 횟수만큼 스크롤 수행
-//            for (int i = 0; i < randomScrollCount; i++) {
-//                scrollable.scrollForward();
-//                Thread.sleep(1000); // 스크롤 사이에 잠시 대기
-//            }
-//            //루프 초기화
-//            found = false;
-//            while (!found) {
-//                List<UiObject2> imageViews = device.findObjects(By.clazz(android.widget.ImageView.class));
-//                for (UiObject2 imageView : imageViews) {
-//                    Rect bounds = imageView.getVisibleBounds();
-//                    if (bounds.width() >= 500 && bounds.height() >= 500) {
-//                        device.click(bounds.centerX(), bounds.centerY());
-//                        found = true; // found를 true로 설정
-//                        break; // for 루프를 빠져나옴
-//                    }
-//                }
-//                // found가 true이면 while 루프도 종료
-//                if (found) {
-//                    break;
-//                }
-//            }
-//            // 랜덤한 대기 시간(초) 생성 (예: 1부터 5초 사이의 랜덤한 대기 시간)
-//            int randomWaitTimeInSeconds = random.nextInt(30) + 20;
-//            // 생성된 랜덤 대기 시간 만큼 영상 시청
-//            Thread.sleep(randomWaitTimeInSeconds * 1000);
-//
-//            Thread.sleep(5000);
-//            closeApp("com.google.android.youtube");
-//            //다시검색
-//            launchMainActivity(keyword);
-//            //루프 초기화
-            found = false;
-            while (!found) {
                 Thread.sleep(3000);
                 String inputString = processContentDesc(fetchKeywordFromServer(1));
                 // 입력 문자열의 길이 계산
@@ -238,7 +124,11 @@ public class uiAutoMator {
                 if (!found) {
                     boolean canScrollMore = scrollable.scrollForward();
                     if (!canScrollMore) {
-                        break; // 더 이상 스크롤할 수 없으면 반복 종료
+                        attempts++;
+                        if (attempts < maxAttempts) {
+                            firstSearch(); // 최초 검색 다시 수행
+                            performSearchAndFilter(); // 필터 설정 다시 수행
+                        }
                     }
                     Thread.sleep(1000);
                 }
@@ -322,6 +212,141 @@ public class uiAutoMator {
         } catch (Exception e) {
             e.printStackTrace();
             return "기본 키워드"; // 에러 발생 시 기본 키워드 반환
+        }
+    }
+
+    // 최초 검색 및 필터 설정 메소드
+    public void performSearchAndFilter() throws InterruptedException,UiObjectNotFoundException  {
+        try {
+            // 최초 검색시
+            String keyword = fetchKeywordFromServer(2);
+            Thread.sleep(3000);
+            // MainActivity 실행
+            launchMainActivity(keyword);
+            // 앱이 열릴 때까지 1초마다 확인 (최대 10번)
+            for (int i = 0; i < 3; i++) {
+                if (isAppOpen("com.google.android.youtube")) {
+                    break; // 앱이 열려있으면 확인 중단
+                }
+                Thread.sleep(1000);
+            }
+            boolean found = false;
+
+
+            //헴버거메뉴 클릭
+            while (!found) {
+                List<UiObject2> imageViews = device.findObjects(By.clazz(android.widget.ImageView.class));
+
+                for (UiObject2 imageView : imageViews) {
+                    String contentDesc = imageView.getContentDescription();
+                    if (contentDesc != null && (contentDesc.contains("옵션 더보기"))) {
+                        imageView.click();
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    Thread.sleep(1000); // 요소를 찾지 못했을 때 잠시 대기 후 다시 시도
+                }
+            }
+
+            Thread.sleep(2000);
+            //루프 초기화
+            found = false;
+            //검색필터 클릭
+            while (!found) {
+                List<UiObject2> titles = device.findObjects(By.res("com.google.android.youtube:id/title"));
+
+                for (UiObject2 title : titles) {
+                    String titleText = title.getText();
+                    if ("검색 필터".equals(titleText) || "Search filters".equals(titleText)) {
+                        title.click();
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    Thread.sleep(1000); // 요소를 찾지 못했을 때 잠시 대기 후 다시 시도
+                }
+            }
+            Thread.sleep(2000);
+            //루프 초기화
+            found = false;
+            //실시간 클릭
+
+            while (!found) {
+                List<UiObject2> titles = device.findObjects(By.clazz("android.widget.TextView"));
+
+                for (UiObject2 title : titles) {
+                    String titleText = title.getText();
+                    if ("실시간".equals(titleText)) {
+                        title.click();
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    Thread.sleep(1000); // 요소를 찾지 못했을 때 잠시 대기 후 다시 시도
+                }
+            }
+            Thread.sleep(2000);
+            // 적용버튼 클릭
+            UiObject2 applyButton = device.findObject(By.res("com.google.android.youtube:id/apply"));
+            if (applyButton != null) {
+                applyButton.click();
+            }
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            throw e; // 예외 발생 시 다시 호출한 곳으로 예외 전파
+        }
+    }
+    public void firstSearch() throws InterruptedException,UiObjectNotFoundException{
+        try {
+            String keyword = fetchKeywordFromServer(2);
+            Thread.sleep(3000);
+            // MainActivity 실행
+            launchMainActivity(keyword);
+            // 랜덤 객체 생성
+            Random random = new Random();
+            int randomScrollCount = random.nextInt(3) + 2; // 0~3의 랜덤값에 2를 더함
+            // UiScrollable 인스턴스 생성
+            UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
+            // 랜덤한 횟수만큼 스크롤 수행
+            for (int i = 0; i < randomScrollCount; i++) {
+                scrollable.scrollForward();
+                Thread.sleep(1000); // 스크롤 사이에 잠시 대기
+            }
+            //루프 초기화
+            boolean found = false;
+            while (!found) {
+                List<UiObject2> imageViews = device.findObjects(By.clazz(android.widget.ImageView.class));
+                for (UiObject2 imageView : imageViews) {
+                    Rect bounds = imageView.getVisibleBounds();
+                    if (bounds.width() >= 500 && bounds.height() >= 500) {
+                        device.click(bounds.centerX(), bounds.centerY());
+                        found = true; // found를 true로 설정
+                        break; // for 루프를 빠져나옴
+                    }
+                }
+                // found가 true이면 while 루프도 종료
+                if (found) {
+                    break;
+                }
+            }
+            // 랜덤한 대기 시간(초) 생성 (예: 1부터 5초 사이의 랜덤한 대기 시간)
+            int randomWaitTimeInSeconds = random.nextInt(30) + 20;
+            // 생성된 랜덤 대기 시간 만큼 영상 시청
+            Thread.sleep(randomWaitTimeInSeconds * 1000);
+
+            Thread.sleep(5000);
+            closeApp("com.google.android.youtube");
+        }catch (InterruptedException | UiObjectNotFoundException e) {
+            e.printStackTrace();
+            throw e; // 예외 발생 시 다시 호출한 곳으로 예외 전파
         }
     }
 }
