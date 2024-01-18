@@ -263,7 +263,21 @@ task runParallelTestsForInstall {
                     def uninstallProc = uninstallCommand.execute()
                     uninstallProc.waitFor()
 
-                    // APK 파일 설치
+                    // 기존 APK 제거
+                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
+                    def uninstallMainProc = uninstallCommand.execute()
+                    uninstallMainProc.waitFor()
+
+                    // APK 파일 설치 Main
+                    def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
+                    def installMainProc = installCommand.execute()
+                    installMainProc.waitFor()
+                    if (installMainCommand.exitValue() != 0) {
+                        println "Failed to install APK on device $device"
+                        return
+                    }
+
+                    // APK 파일 설치 TEST
                     def installCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
                     def installProc = installCommand.execute()
                     installProc.waitFor()
