@@ -69,8 +69,132 @@ task runInstrumentedTests(type: Exec) {
     // 테스트 실행 태스크 정의
 //    commandLine 'adb', 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.example.uiautomator.uiAutoMator', 'com.example.uiautomator.test/androidx.test.runner.AndroidJUnitRunner'
 
-//    commandLine 'adb', '-s', remoteDeviceIpAddress, 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.example.uiautomator.uiAutoMator', 'com.example.uiautomator.test/androidx.test.runner.AndroidJUnitRunner'
+//    commandLine adb -s emulator-5554 shell am instrument -w -e class com.example.uiautomator.uiAutoMator com.example.uiautomator.test/androidx.test.runner.AndroidJUnitRunner
 
+}
+task installApkOnAllDevices {
+    doLast {
+        def deviceList = []
+        "adb devices".execute().text.eachLine { line ->
+            if (line.endsWith("device")) {
+                def device = line.split()[0]
+                deviceList.add(device)
+            }
+        }
+
+        if (deviceList.isEmpty()) {
+            println "No connected devices found."
+            return
+        }
+
+        deviceList.each { device ->
+            try {
+                def installCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
+                def installProc = installCommand.execute()
+                installProc.waitFor()
+                if (installProc.exitValue() == 0) {
+                    println "Successfully installed APK on device $device"
+                } else {
+                    println "Failed to install APK on device $device"
+                }
+            } catch (Exception e) {
+                println "Error installing APK on device $device: $e.message"
+            }
+        }
+    }
+}
+task installTestApkOnAllDevices {
+    doLast {
+        def deviceList = []
+        "adb devices".execute().text.eachLine { line ->
+            if (line.endsWith("device")) {
+                def device = line.split()[0]
+                deviceList.add(device)
+            }
+        }
+
+        if (deviceList.isEmpty()) {
+            println "No connected devices found."
+            return
+        }
+
+        deviceList.each { device ->
+            try {
+                def installCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
+                def installProc = installCommand.execute()
+                installProc.waitFor()
+                if (installProc.exitValue() == 0) {
+                    println "Successfully installed APK on device $device"
+                } else {
+                    println "Failed to install APK on device $device"
+                }
+            } catch (Exception e) {
+                println "Error installing APK on device $device: $e.message"
+            }
+        }
+    }
+}
+task uninstallApkFromAllDevices {
+    doLast {
+        def deviceList = []
+        "adb devices".execute().text.eachLine { line ->
+            if (line.endsWith("device")) {
+                def device = line.split()[0]
+                deviceList.add(device)
+            }
+        }
+
+        if (deviceList.isEmpty()) {
+            println "No connected devices found."
+            return
+        }
+
+        deviceList.each { device ->
+            try {
+                def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
+                def uninstallProc = uninstallCommand.execute()
+                uninstallProc.waitFor()
+                if (uninstallProc.exitValue() == 0) {
+                    println "Successfully uninstalled APK from device $device"
+                } else {
+                    println "Failed to uninstall APK from device $device"
+                }
+            } catch (Exception e) {
+                println "Error uninstalling APK from device $device: $e.message"
+            }
+        }
+    }
+}
+task uninstallTestApkFromAllDevices {
+    doLast {
+        def deviceList = []
+        "adb devices".execute().text.eachLine { line ->
+            if (line.endsWith("device")) {
+                def device = line.split()[0]
+                deviceList.add(device)
+            }
+        }
+
+        if (deviceList.isEmpty()) {
+            println "No connected devices found."
+            return
+        }
+
+        deviceList.each { device ->
+            try {
+                def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
+                def uninstallProc = uninstallCommand.execute()
+                uninstallProc.waitFor()
+                if (uninstallProc.exitValue() == 0) {
+                    println "Successfully uninstalled APK from device $device"
+                } else {
+                    println "Failed to uninstall APK from device $device"
+                }
+            } catch (Exception e) {
+                println "Error uninstalling APK from device $device: $e.message"
+            }
+        }
+    }
 }
 task runParallelTests {
     doLast {

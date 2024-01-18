@@ -61,6 +61,10 @@ public class uiAutoMator {
                 }
                 Thread.sleep(1000);
             }
+
+            Thread.sleep(5000);
+
+
             boolean found = false;
             // UiScrollable 인스턴스 생성
             UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
