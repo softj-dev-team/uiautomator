@@ -20,6 +20,7 @@ import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +30,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -53,13 +57,13 @@ public class uiAutoMator {
             closeApp("com.google.android.youtube");
             Thread.sleep(3000);
             // MainActivity 실행
-            String keyword = fetchKeywordFromServer(2);
-            launchMainActivity(keyword);
+            Map<String, String> keywordData = fetchKeywordFromServer();
+            launchMainActivity(keywordData.get("keyword"));
             Thread.sleep(3000);
             // 최초 검색
 //                firstSearch();
             // 최초 검색 및 필터 설정 수행
-            performSearchAndFilter();
+            performSearchAndFilter(keywordData.get("keyword"));
             //루프 초기화
             boolean found = false;
             while (!found && attempts < maxAttempts) {
@@ -67,7 +71,7 @@ public class uiAutoMator {
                 UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
 
                 Thread.sleep(3000);
-                String inputString = processContentDesc(fetchKeywordFromServer(1));
+                String inputString = processContentDesc(keywordData.get("title"));
                 // 입력 문자열의 길이 계산
                 int inputStringLength = inputString.length();
 
@@ -132,7 +136,7 @@ public class uiAutoMator {
                         attempts++;
                         if (attempts < maxAttempts) {
                             firstSearch(); // 최초 검색 다시 수행
-                            performSearchAndFilter(); // 필터 설정 다시 수행
+                            performSearchAndFilter(keywordData.get("keyword")); // 필터 설정 다시 수행
                         }
                     }
                     Thread.sleep(1000);
@@ -180,24 +184,15 @@ public class uiAutoMator {
         }
     }
     // 서버에서 키워드를 가져오는 메서드
-    private String fetchKeywordFromServer(int inputNumber) {
+    private Map<String, String> fetchKeywordFromServer() {
         try {
-            // 서버 URL 설정
-            String apiUrl = "https://esaydroid.softj.net/api/search-title/"+inputNumber;
-
-            // URL 객체 생성
+            String apiUrl = "https://esaydroid.softj.net/api/search-title";
             URL url = new URL(apiUrl);
-
-            // HTTP 연결 설정
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
-
-            // Accept 헤더를 설정하여 JSON 형식의 응답을 요청
             conn.setRequestProperty("Accept", "application/json");
-            // 연결 요청
             conn.connect();
 
-            // 응답 데이터 읽기
             BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             StringBuilder response = new StringBuilder();
             String line;
@@ -209,22 +204,24 @@ public class uiAutoMator {
             br.close();
             conn.disconnect();
 
-            // JSON 응답 파싱
-            JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject();
-            String keyword = jsonObject.get("title").getAsString();
+            JSONObject jsonObject = new JSONObject(response.toString());
+            Map<String, String> result = new HashMap<>();
 
-            return keyword;
+            // title 및 keyword를 Map에 추가
+            result.put("title", jsonObject.getString("title"));
+            result.put("keyword", jsonObject.getString("keyword"));
+
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
-            return "기본 키워드"; // 에러 발생 시 기본 키워드 반환
+            return new HashMap<>(); // 에러 발생 시 빈 Map 반환
         }
     }
 
     // 최초 검색 및 필터 설정 메소드
-    public void performSearchAndFilter() throws InterruptedException,UiObjectNotFoundException  {
+    public void performSearchAndFilter(String keyword) throws InterruptedException,UiObjectNotFoundException  {
         try {
             // 최초 검색시
-            String keyword = fetchKeywordFromServer(2);
             Thread.sleep(3000);
             // MainActivity 실행
             launchMainActivity(keyword);
@@ -236,7 +233,7 @@ public class uiAutoMator {
                 Thread.sleep(1000);
             }
             boolean found = false;
-
+            boolean foundOption = false;
 
             //헴버거메뉴 클릭
             while (!found) {
@@ -246,6 +243,7 @@ public class uiAutoMator {
                     String contentDesc = imageView.getContentDescription();
                     if (contentDesc != null && (contentDesc.contains("옵션 더보기"))) {
                         imageView.click();
+                        foundOption=false;//옵션더보기가 없는 기종
                         found = true;
                         break;
                     }
@@ -253,6 +251,15 @@ public class uiAutoMator {
 
                 if (!found) {
                     Thread.sleep(1000); // 요소를 찾지 못했을 때 잠시 대기 후 다시 시도
+                    // 'android.widget.ImageButton' 중 'content-desc'가 '필터'인 요소를 찾기
+                    List<UiObject2> filterButtons = device.findObjects(By.clazz("android.widget.ImageButton").desc("필터"));
+
+                    // 찾은 요소 중 특정 조건(예: 첫 번째 요소)에 맞는 요소를 클릭
+                    if (!filterButtons.isEmpty()) {
+                        // 예시: 첫 번째 요소 클릭
+                        foundOption=true;
+                        filterButtons.get(0).click();
+                    }
                 }
             }
 
@@ -260,7 +267,7 @@ public class uiAutoMator {
             //루프 초기화
             found = false;
             //검색필터 클릭
-            while (!found) {
+            while (!found && !foundOption) {
                 List<UiObject2> titles = device.findObjects(By.res("com.google.android.youtube:id/title"));
 
                 for (UiObject2 title : titles) {

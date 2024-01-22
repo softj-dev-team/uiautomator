@@ -1,8 +1,21 @@
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-
+buildscript {
+    // buildscript 의존성과 레포지토리 정의
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        // 기타 필요한 레포지토리
+    }
+    dependencies {
+        classpath "org.ajoberstar.grgit:grgit-gradle:4.1.1"
+        // 기타 필요한 의존성
+    }
+}
 plugins {
     id 'com.android.application'
+    id 'org.ajoberstar.grgit' version '4.1.1'
 }
 
 android {
@@ -72,6 +85,27 @@ task runInstrumentedTests(type: Exec) {
 //    commandLine adb -s emulator-5554 shell am instrument -w -e class com.example.uiautomator.uiAutoMator com.example.uiautomator.test/androidx.test.runner.AndroidJUnitRunner
 
 }
+task stopAppOnAllDevices {
+    doLast {
+        def deviceList = []
+
+        // 연결된 디바이스 목록 가져오기
+        def proc = "adb devices".execute()
+        proc.text.eachLine { line ->
+            if (line.endsWith("device")) {
+                def device = line.split()[0]
+                deviceList.add(device)
+            }
+        }
+
+        // 각 디바이스에 대해 애플리케이션 강제 중지
+        deviceList.each { deviceId ->
+            println "Stopping app on device: $deviceId"
+            "adb -s $deviceId shell am force-stop com.google.android.youtube".execute()
+        }
+    }
+}
+
 task installApkOnAllDevices {
     doLast {
         def deviceList = []
@@ -258,31 +292,37 @@ task runParallelTestsForInstall {
         deviceList.each { device ->
             executor.execute {
                 try {
-                    // 기존 APK 제거
-                    def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
-                    def uninstallProc = uninstallCommand.execute()
-                    uninstallProc.waitFor()
-
-                    // 기존 APK 제거
-                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
-                    def uninstallMainProc = uninstallCommand.execute()
-                    uninstallMainProc.waitFor()
-
+//                    // 기존 APK 제거
+//                    def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
+//                    def uninstallProc = uninstallCommand.execute()
+//                    uninstallProc.waitFor()
+//                    if (uninstallProc.exitValue() != 0) {
+//                        println "Failed to uninstallProc on device $device"
+//                        return
+//                    }
+//                    // 기존 APK 제거
+//                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
+//                    def uninstallMainProc = uninstallMainCommand.execute()
+//                    uninstallMainProc.waitFor()
+//                    if (uninstallMainProc.exitValue() != 0) {
+//                        println "Failed to uninstallMainProc on device $device"
+//                        return
+//                    }
                     // APK 파일 설치 Main
-                    def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
-                    def installMainProc = installCommand.execute()
+                    def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
+                    def installMainProc = installMainCommand.execute()
                     installMainProc.waitFor()
-                    if (installMainCommand.exitValue() != 0) {
-                        println "Failed to install APK on device $device"
+                    if (installMainProc.exitValue() != 0) {
+                        println "Failed to install main APK on device $device"
                         return
                     }
 
                     // APK 파일 설치 TEST
-                    def installCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
-                    def installProc = installCommand.execute()
-                    installProc.waitFor()
-                    if (installProc.exitValue() != 0) {
-                        println "Failed to install APK on device $device"
+                    def installTestCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
+                    def installTestProc = installTestCommand.execute()
+                    installTestProc.waitFor()
+                    if (installTestProc.exitValue() != 0) {
+                        println "Failed to install test APK on device $device"
                         return
                     }
 
@@ -299,5 +339,17 @@ task runParallelTestsForInstall {
         // 모든 작업이 완료될 때까지 기다림
         executor.shutdown()
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+    }
+}
+task gitPullOriginMain {
+    doLast {
+        grgit.open {
+            // 현재 프로젝트 디렉토리를 Git 리포지토리로 엽니다.
+            dir = file('../')
+        }.pull {
+            // 'origin main'에서 pull
+            remote = 'origin'
+            branch = 'master'
+        }
     }
 }
