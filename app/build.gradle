@@ -1,5 +1,6 @@
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import org.ajoberstar.grgit.operation.ResetOp
 buildscript {
     // buildscript 의존성과 레포지토리 정의
     repositories {
@@ -343,13 +344,17 @@ task runParallelTestsForInstall {
 }
 task gitPullOriginMain {
     doLast {
-        grgit.open {
-            // 현재 프로젝트 디렉토리를 Git 리포지토리로 엽니다.
-            dir = file('../')
-        }.pull {
-            // 'origin main'에서 pull
-            remote = 'origin'
-            branch = 'master'
-        }
+        def grgit = grgit.open(dir: file('../'))
+
+        // 원격 저장소의 master 브랜치를 fetch
+        grgit.fetch(refSpecs: ['+refs/heads/master:refs/remotes/origin/master'])
+
+        // 원격 저장소의 master 브랜치 최신 커밋 가져오기
+        def commit = grgit.resolve.toCommit('refs/remotes/origin/master')
+
+        // 현재 브랜치를 해당 커밋으로 강제 리셋
+        grgit.reset(commit: commit, mode: 'HARD')
+
+        grgit.close()
     }
 }
