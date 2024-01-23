@@ -347,7 +347,7 @@ public class uiAutoMator {
                 }
             }
             // 랜덤한 대기 시간(초) 생성 (예: 1부터 5초 사이의 랜덤한 대기 시간)
-            int randomWaitTimeInSeconds = random.nextInt(30) + 20;
+            int randomWaitTimeInSeconds = random.nextInt(181) + 120;
             // 생성된 랜덤 대기 시간 만큼 영상 시청
             Thread.sleep(randomWaitTimeInSeconds * 1000);
 
