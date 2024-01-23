@@ -61,7 +61,7 @@ public class uiAutoMator {
             launchMainActivity(keywordData.get("keyword"));
             Thread.sleep(3000);
             // 최초 검색
-//                firstSearch();
+            firstSearch();
             // 최초 검색 및 필터 설정 수행
             performSearchAndFilter(keywordData.get("keyword"));
             //루프 초기화
