@@ -61,20 +61,23 @@ public class uiAutoMator {
             launchMainActivity(keywordData.get("keyword"));
             Thread.sleep(3000);
             // 최초 검색
-            firstSearch();
+            if(keywordData.get("use_random_play").equals("Y")){
+                firstSearch();
+            }
             // 최초 검색 및 필터 설정 수행
-            performSearchAndFilter(keywordData.get("keyword"));
+            if(keywordData.get("use_filter").equals("Y")){
+                performSearchAndFilter(keywordData.get("keyword"));
+            }
+
             //루프 초기화
             boolean found = false;
             while (!found && attempts < maxAttempts) {
                 // UiScrollable 인스턴스 생성
                 UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
-
                 Thread.sleep(3000);
                 String inputString = processContentDesc(keywordData.get("title"));
                 // 입력 문자열의 길이 계산
                 int inputStringLength = inputString.length();
-
                 List<UiObject2> viewGroups = device.findObjects(By.clazz(android.view.ViewGroup.class));
                 for (UiObject2 viewGroup : viewGroups) {
                     try {
@@ -210,7 +213,8 @@ public class uiAutoMator {
             // title 및 keyword를 Map에 추가
             result.put("title", jsonObject.getString("title"));
             result.put("keyword", jsonObject.getString("keyword"));
-
+            result.put("use_random_play", jsonObject.getString("use_random_play"));
+            result.put("use_filter", jsonObject.getString("use_filter"));
             return result;
         } catch (Exception e) {
             e.printStackTrace();
