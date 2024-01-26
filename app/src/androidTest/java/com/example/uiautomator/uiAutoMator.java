@@ -1,36 +1,23 @@
 package com.example.uiautomator;
-import android.graphics.Bitmap;
 import static androidx.test.InstrumentationRegistry.getContext;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.Uri;
-import android.os.RemoteException;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
-import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
-
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +26,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 @RunWith(AndroidJUnit4.class)
 public class uiAutoMator {
     private UiDevice device;
@@ -87,6 +72,9 @@ public class uiAutoMator {
                             // contentDesc 문자열을 입력 문자열의 길이만큼 추출
                             String extractedContentDesc = processContentDesc.substring(0, Math.min(contentDesc.length(), inputStringLength));
                             // 추출된 문자열과 입력 문자열 비교
+                            // 콘솔에 로그 출력
+                            System.out.println("Input String: " + inputString);
+                            System.out.println("Extracted Content Description: " + extractedContentDesc);
                             if (inputString.equals(extractedContentDesc)) {
                                 UiObject2 targetObject = viewGroup;
                                 // 요소의 위치 확인
@@ -138,8 +126,14 @@ public class uiAutoMator {
                     if (!canScrollMore) {
                         attempts++;
                         if (attempts < maxAttempts) {
-                            firstSearch(); // 최초 검색 다시 수행
-                            performSearchAndFilter(keywordData.get("keyword")); // 필터 설정 다시 수행
+                            // 최초 검색
+                            if(keywordData.get("use_random_play").equals("Y")){
+                                firstSearch();
+                            }
+                            // 최초 검색 및 필터 설정 수행
+                            if(keywordData.get("use_filter").equals("Y")){
+                                performSearchAndFilter(keywordData.get("keyword"));
+                            }
                         }
                     }
                     Thread.sleep(1000);
@@ -228,7 +222,7 @@ public class uiAutoMator {
             // 최초 검색시
             Thread.sleep(3000);
             // MainActivity 실행
-            launchMainActivity(keyword);
+//            launchMainActivity(keyword);
             // 앱이 열릴 때까지 1초마다 확인 (최대 10번)
             for (int i = 0; i < 3; i++) {
                 if (isAppOpen("com.google.android.youtube")) {
