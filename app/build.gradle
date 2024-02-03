@@ -97,14 +97,41 @@ task stopAppOnAllDevices {
                 deviceList.add(device)
             }
         }
+        // 종료할 애플리케이션의 패키지 목록
+        def packageList = ['com.google.android.youtube', 'com.example.uiautomator.uiAutoMator', 'com.example.uiautomator.test']
 
-        // 각 디바이스에 대해 애플리케이션 강제 중지
+        // 각 디바이스에 대해 모든 애플리케이션 강제 중지
         deviceList.each { deviceId ->
-            println "Stopping app on device: $deviceId"
-            "adb -s $deviceId shell am force-stop com.google.android.youtube".execute()
+            packageList.each { packageName ->
+                println "Stopping app $packageName on device: $deviceId"
+                "adb -s $deviceId shell am force-stop $packageName".execute()
+            }
         }
     }
 }
+task stopAppOnSpecifiedDevices {
+    doLast {
+        // 외부에서 전달된 디바이스 목록을 가져오기
+        if (project.hasProperty('deviceList')) {
+            def deviceList = project.deviceList.split(',')
+
+            // 종료할 애플리케이션의 패키지 목록
+            def packageList = ['com.google.android.youtube', 'com.example.uiautomator.uiAutoMator', 'com.example.uiautomator.test']
+
+            // 각 디바이스에 대해 모든 애플리케이션 강제 중지
+            deviceList.each { deviceId ->
+                packageList.each { packageName ->
+                    println "Stopping app $packageName on device: $deviceId"
+                    "adb -s $deviceId shell am force-stop $packageName".execute()
+                }
+            }
+
+        } else {
+            println "No device list specified. Skipping task."
+        }
+    }
+}
+
 
 task installApkOnAllDevices {
     doLast {
