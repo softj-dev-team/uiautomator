@@ -183,7 +183,7 @@ public class uiAutoMator {
     // 서버에서 키워드를 가져오는 메서드
     private Map<String, String> fetchKeywordFromServer() {
         try {
-            String apiUrl = "http://180.80.138.80:3000/api/search-title";
+            String apiUrl = "http://180.80.138.80:8443/api/search-title";
             URL url = new URL(apiUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
