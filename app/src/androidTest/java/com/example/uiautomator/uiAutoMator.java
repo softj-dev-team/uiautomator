@@ -183,7 +183,7 @@ public class uiAutoMator {
     // 서버에서 키워드를 가져오는 메서드
     private Map<String, String> fetchKeywordFromServer() {
         try {
-            String apiUrl = "http://180.80.138.80:8443/api/search-title";
+            String apiUrl = "https://esaydroid.appccrs.com/api/search-title";
             URL url = new URL(apiUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
@@ -291,7 +291,7 @@ public class uiAutoMator {
 
                 for (UiObject2 title : titles) {
                     String titleText = title.getText();
-                    if ("실시간".equals(titleText)) {
+                    if ("라이브".equals(titleText)) {
                         title.click();
                         found = true;
                         break;
