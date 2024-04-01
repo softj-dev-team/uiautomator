@@ -5,6 +5,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -57,6 +59,19 @@ public class MainActivity extends AppCompatActivity {
         intent.setPackage("com.google.android.youtube");
 //        intent.setPackage("com.android.chrome");
         startActivity(intent);
+    }
+    WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+    private void wifiConfig(){
+
+        WifiConfiguration wifiConfig = new WifiConfiguration();
+        wifiConfig.SSID = String.format("\"%s\"", "esaydroid5G");
+        wifiConfig.preSharedKey = String.format("\"%s\"", "!1qazsoftj");
+
+        int netId = wifiManager.addNetwork(wifiConfig);
+        wifiManager.disconnect();
+        wifiManager.enableNetwork(netId, true);
+        wifiManager.reconnect();
+
     }
 
 }

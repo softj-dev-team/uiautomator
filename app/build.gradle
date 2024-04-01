@@ -1,5 +1,6 @@
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.net.InetAddress
 buildscript {
     // buildscript 의존성과 레포지토리 정의
     repositories {
@@ -320,6 +321,21 @@ task runParallelTestsForInstallGetDevices {
         deviceList.each { device ->
             executor.execute {
                 try {
+                    def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
+                    def uninstallProc = uninstallCommand.execute()
+                    uninstallProc.waitFor()
+                    if (uninstallProc.exitValue() != 0) {
+                        println "Failed to uninstallProc on device $device"
+                        return
+                    }
+//                    // 기존 APK 제거
+                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
+                    def uninstallMainProc = uninstallMainCommand.execute()
+                    uninstallMainProc.waitFor()
+                    if (uninstallMainProc.exitValue() != 0) {
+                        println "Failed to uninstallMainProc on device $device"
+                        return
+                    }
                     // APK 파일 설치 Main
                     def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
                     def installMainProc = installMainCommand.execute()
@@ -378,21 +394,21 @@ task runParallelTestsForInstall {
             executor.execute {
                 try {
 //                    // 기존 APK 제거
-//                    def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
-//                    def uninstallProc = uninstallCommand.execute()
-//                    uninstallProc.waitFor()
-//                    if (uninstallProc.exitValue() != 0) {
-//                        println "Failed to uninstallProc on device $device"
-//                        return
-//                    }
+                    def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
+                    def uninstallProc = uninstallCommand.execute()
+                    uninstallProc.waitFor()
+                    if (uninstallProc.exitValue() != 0) {
+                        println "Failed to uninstallProc on device $device"
+                        return
+                    }
 //                    // 기존 APK 제거
-//                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
-//                    def uninstallMainProc = uninstallMainCommand.execute()
-//                    uninstallMainProc.waitFor()
-//                    if (uninstallMainProc.exitValue() != 0) {
-//                        println "Failed to uninstallMainProc on device $device"
-//                        return
-//                    }
+                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
+                    def uninstallMainProc = uninstallMainCommand.execute()
+                    uninstallMainProc.waitFor()
+                    if (uninstallMainProc.exitValue() != 0) {
+                        println "Failed to uninstallMainProc on device $device"
+                        return
+                    }
                     // APK 파일 설치 Main
                     def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
                     def installMainProc = installMainCommand.execute()
@@ -440,5 +456,102 @@ task gitPullOriginMain {
         grgit.reset(commit: commit, mode: 'HARD')
 
         grgit.close()
+    }
+}
+
+def generateIpList(String startIp, String endIp) {
+    def start = InetAddress.getByName(startIp).address
+    def end = InetAddress.getByName(endIp).address
+    def ips = []
+    int compare = startIp.compareTo(endIp)
+    while (compare <= 0) {
+        ips.add(startIp)
+        start[3]++
+        if (start[3] == 0) {
+            start[2]++
+            if (start[2] == 0) {
+                start[1]++
+                if (start[1] == 0) {
+                    start[0]++
+                }
+            }
+        }
+        startIp = InetAddress.getByAddress(start).hostAddress
+        compare = startIp.compareTo(endIp)
+    }
+    return ips
+}
+task runWifiConfigTests {
+    doLast {
+        // IP 주소 범위와 디바이스 목록을 설정
+        def ipRange = project.hasProperty('ipRange') ? project.property('ipRange') : "192.168.0.1-192.168.0.5"
+        def (startIp, endIp) = ipRange.split('-')
+        def ipList = generateIpList(startIp, endIp)
+        def deviceList = project.hasProperty('deviceList') ? project.property('deviceList').split(",") : []
+
+        def gateway = "211.50.174.129"
+        def dns1 = "203.248.252.2"
+        def dns2 = "164.124.101.2"
+        def testClass = "com.example.uiautomator.wifiRunConfig"
+        def testPackage = "com.example.uiautomator.test"
+
+        // ExecutorService를 사용하여 디바이스 목록 크기에 맞는 스레드 풀을 생성
+        def executor = Executors.newFixedThreadPool(deviceList.size())
+
+        // 각 디바이스와 IP에 대한 테스트를 병렬로 실행
+        deviceList.eachWithIndex { device, index ->
+            // ExecutorService를 사용하여 병렬 실행
+            executor.execute {
+                try {
+                    def ip = ipList.size() > index ? ipList[index] : ""
+
+                    def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
+                    def uninstallProc = uninstallCommand.execute()
+                    uninstallProc.waitFor()
+                    if (uninstallProc.exitValue() != 0) {
+                        println "Failed to uninstallProc on device $device"
+                        return
+                    }
+        //                    // 기존 APK 제거
+                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
+                    def uninstallMainProc = uninstallMainCommand.execute()
+                    uninstallMainProc.waitFor()
+                    if (uninstallMainProc.exitValue() != 0) {
+                        println "Failed to uninstallMainProc on device $device"
+                        return
+                    }
+                    // APK 파일 설치 Main
+                    def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
+                    def installMainProc = installMainCommand.execute()
+                    installMainProc.waitFor()
+                    if (installMainProc.exitValue() != 0) {
+                        println "Failed to install main APK on device $device"
+                        return
+                    }
+
+                    // APK 파일 설치 TEST
+                    def installTestCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
+                    def installTestProc = installTestCommand.execute()
+                    installTestProc.waitFor()
+                    if (installTestProc.exitValue() != 0) {
+                        println "Failed to install test APK on device $device"
+                        return
+                    }
+
+                    // ADB 명령 구성
+                    def command = "adb -s ${device} shell am instrument -w -e ip \"${ip}\" -e gateway \"${gateway}\" -e dns1 \"${dns1}\" -e dns2 \"${dns2}\" -e class ${testClass} ${testPackage}/androidx.test.runner.AndroidJUnitRunner"
+                    def testProc = command.execute()
+                    testProc.waitFor()
+                    println "Device $device: " + testProc.in.text
+                } catch (Exception e) {
+                    println "Failed to run test on device $device: $e.message"
+                }
+
+
+            }
+        }
+        executor.shutdown()
+        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+        // 모든 테스트 실행이 완료될 때까지 기다림
     }
 }

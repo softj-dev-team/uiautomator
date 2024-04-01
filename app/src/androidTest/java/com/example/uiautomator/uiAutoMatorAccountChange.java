@@ -1,5 +1,7 @@
 package com.example.uiautomator;
 
+import android.os.RemoteException;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -15,6 +17,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Random;
 
 @RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = 18)
@@ -31,17 +35,23 @@ public class uiAutoMatorAccountChange {
     @Test
     public void openAccountSettings() {
         try {
+            // 홈 화면으로 이동
+            device.pressHome();
+
+            // 앱 드로어(모든 앱이 보이는 화면) 열기
+            device.pressRecentApps();
+
             // 설정 앱 실행
             device.executeShellCommand("am start -a android.settings.SETTINGS");
             Thread.sleep(3000); // 초기 로딩 대기
 
             // 검색창 선택
-            UiObject2 searchField = device.wait(Until.findObject(By.res("com.android.settings:id/search_action_bar_title")), 3000);
+            UiObject2 searchField = device.wait(Until.findObject(By.clazz("android.widget.Button")), 3000);
             if (searchField != null) {
                 searchField.click();
 
                 // 검색어 입력
-                UiObject2 inputField = device.wait(Until.findObject(By.clazz("android.widget.EditText")), 3000);
+                UiObject2 inputField = device.wait(Until.findObject(By.res("com.android.settings.intelligence:id/search_src_text")), 3000);
                 if (inputField != null) {
                     inputField.setText("계정");
                     inputField.click(); // 클릭하여 키보드를 활성화
@@ -49,53 +59,42 @@ public class uiAutoMatorAccountChange {
             }
 
 
-            // '계정 추가' 옵션으로 이동
-            UiObject2 addAccountOption = device.wait(Until.findObject(By.res("android:id/title").text("계정")), 3000);
-            if(addAccountOption != null){
-                addAccountOption.click();
-            }else{
-                UiObject2 addAccountOption_false = device.wait(Until.findObject(By.res("android:id/title").text("비밀번호 및 계정")), 3000);
-                if(addAccountOption_false != null) {
-                    addAccountOption_false.click();
-                }
-            }
+            device.wait(Until.findObject(By.text("계정 및 백업")), 8000).click();
+
+            device.wait(Until.findObject(By.text("계정")), 3000).click();
+
+            device.wait(Until.findObject(By.text("계정 추가")), 3000).click();
+
+            device.wait(Until.findObject(By.text("Google")), 3000).click();
 
 
-            // Google 계정 선택
-            UiObject2 googleOption = device.wait(Until.findObject(By.res("android:id/title").text("계정 추가")), 3000);
-            googleOption.click();
+            device.wait(Until.findObject(By.text("계정 만들기")), 8000).click();
 
-            // Google 계정 선택
-            UiObject2 google = device.wait(Until.findObject(By.res("android:id/title").text("Google")), 3000);
-            google.click();
+            device.wait(Until.findObject(By.text("개인용")), 3000).click();
 
-            // 이메일 주소 입력
-            UiObject2 emailField = device.wait(Until.findObject(By.clazz("android.widget.EditText")), 8000);
+
+            List<UiObject2> testFields = device.wait(Until.findObjects(By.clazz("android.widget.EditText")), 8000);
             Thread.sleep(3000);
-            emailField.setText(email);
-
-            // '다음' 버튼 클릭
-            UiObject2 nextButton = device.wait(Until.findObject(By.textContains("다음")), 10000);
-            nextButton.click();
-
-            Thread.sleep(5000);
-            // 패스워드 입력
-            UiObject2 passwordField = device.wait(Until.findObject(By.clazz("android.widget.EditText")), 10000);
-            Thread.sleep(3000);
-            passwordField.setText(password);
-
-            // '다음' 버튼 클릭
-            UiObject2 nextButtonPassword = device.wait(Until.findObject(By.textContains("다음")), 5000);
-            nextButtonPassword.click();
-
-            Thread.sleep(3000); // 추가 처리를 위한 대기
-
-            // '다음' 버튼 클릭
-            UiObject2 apply = device.wait(Until.findObject(By.res("signinconsentNext")), 5000);
-            apply.click();
+            testFields.get(0).setText(generateRandomAlphabet(4));
 
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
         }
+    }
+    public String generateRandomAlphabet(int length) {
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            // 대문자 A-Z 또는 소문자 a-z 범위 내의 랜덤 문자를 생성
+            char randomChar = (char) (random.nextBoolean() ?
+                    'A' + random.nextInt('Z' - 'A' + 1) :
+                    'a' + random.nextInt('z' - 'a' + 1));
+            sb.append(randomChar);
+        }
+
+        return sb.toString();
     }
 }
