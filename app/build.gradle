@@ -296,17 +296,23 @@ task runParallelTests {
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
     }
 }
-task runParallelTestsForInstallGetDevices {
+tasks.register('runParallelTestsForInstallGetDevices') {
     doLast {
-        // 디버깅 로그 추가
-        println "Has deviceList property: ${project.hasProperty('deviceList')}"
-        if (project.hasProperty('deviceList')) {
-            println "deviceList: ${project.deviceList}"
+        // 로그 파일 경로 설정
+        def logFilePath = "${project.buildDir}/logs/runParallelTestsForInstallGetDevices.log"
+        def logFile = new File(logFilePath)
+        // 로그 파일의 디렉토리가 없으면 생성
+        if (!logFile.parentFile.exists()) {
+            logFile.parentFile.mkdirs()
         }
+        BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true))
+        writer.write('runParallelTestsForInstallGetDevices 시작\n')
 
         // 외부에서 전달된 디바이스 목록을 가져오기
         def deviceList = project.hasProperty('deviceList') ? project.deviceList.split(',') : []
         println "Devices: ${deviceList}"
+        // 예를 들어, 디바이스 리스트 및 IP 범위 로깅
+        writer.write("디바이스 목록: ${deviceList.join(', ')}\n")
 
         // 디바이스 목록이 비어있는지 확인
         if (deviceList.length == 0) {
@@ -328,7 +334,7 @@ task runParallelTestsForInstallGetDevices {
                         println "Failed to uninstallProc on device $device"
                         return
                     }
-//                    // 기존 APK 제거
+                    // 기존 APK 제거
                     def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
                     def uninstallMainProc = uninstallMainCommand.execute()
                     uninstallMainProc.waitFor()
@@ -336,7 +342,7 @@ task runParallelTestsForInstallGetDevices {
                         println "Failed to uninstallMainProc on device $device"
                         return
                     }
-                    // APK 파일 설치 Main
+//                     APK 파일 설치 Main
                     def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
                     def installMainProc = installMainCommand.execute()
                     installMainProc.waitFor()
@@ -345,7 +351,7 @@ task runParallelTestsForInstallGetDevices {
                         return
                     }
 
-                    // APK 파일 설치 TEST
+//                     APK 파일 설치 TEST
                     def installTestCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
                     def installTestProc = installTestCommand.execute()
                     installTestProc.waitFor()
@@ -359,8 +365,12 @@ task runParallelTestsForInstallGetDevices {
                     def testProc = testCommand.execute()
                     testProc.waitFor()
                     println "Device $device: " + testProc.in.text
+
+                    writer.write("Device $device: " + testProc.in.text)
+
                 } catch (Exception e) {
                     println "Failed to run test on device $device: $e.message"
+                    writer.write("Failed to run test on device $device: $e.message")
                 }
             }
         }
@@ -369,7 +379,8 @@ task runParallelTestsForInstallGetDevices {
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
     }
 }
-task runParallelTestsForInstall {
+
+tasks.register('runParallelTestsForInstall-asis') {
     doLast {
         // 연결된 디바이스 목록 가져오기
         def deviceList = []
@@ -394,38 +405,38 @@ task runParallelTestsForInstall {
             executor.execute {
                 try {
 //                    // 기존 APK 제거
-                    def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
-                    def uninstallProc = uninstallCommand.execute()
-                    uninstallProc.waitFor()
-                    if (uninstallProc.exitValue() != 0) {
-                        println "Failed to uninstallProc on device $device"
-                        return
-                    }
+//                    def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
+//                    def uninstallProc = uninstallCommand.execute()
+//                    uninstallProc.waitFor()
+//                    if (uninstallProc.exitValue() != 0) {
+//                        println "Failed to uninstallProc on device $device"
+//                        return
+//                    }
 //                    // 기존 APK 제거
-                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
-                    def uninstallMainProc = uninstallMainCommand.execute()
-                    uninstallMainProc.waitFor()
-                    if (uninstallMainProc.exitValue() != 0) {
-                        println "Failed to uninstallMainProc on device $device"
-                        return
-                    }
+//                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
+//                    def uninstallMainProc = uninstallMainCommand.execute()
+//                    uninstallMainProc.waitFor()
+//                    if (uninstallMainProc.exitValue() != 0) {
+//                        println "Failed to uninstallMainProc on device $device"
+//                        return
+//                    }
                     // APK 파일 설치 Main
-                    def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
-                    def installMainProc = installMainCommand.execute()
-                    installMainProc.waitFor()
-                    if (installMainProc.exitValue() != 0) {
-                        println "Failed to install main APK on device $device"
-                        return
-                    }
+//                    def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
+//                    def installMainProc = installMainCommand.execute()
+//                    installMainProc.waitFor()
+//                    if (installMainProc.exitValue() != 0) {
+//                        println "Failed to install main APK on device $device"
+//                        return
+//                    }
 
                     // APK 파일 설치 TEST
-                    def installTestCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
-                    def installTestProc = installTestCommand.execute()
-                    installTestProc.waitFor()
-                    if (installTestProc.exitValue() != 0) {
-                        println "Failed to install test APK on device $device"
-                        return
-                    }
+//                    def installTestCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
+//                    def installTestProc = installTestCommand.execute()
+//                    installTestProc.waitFor()
+//                    if (installTestProc.exitValue() != 0) {
+//                        println "Failed to install test APK on device $device"
+//                        return
+//                    }
 
                     // 테스트 실행
                     def testCommand = ['adb', '-s', device, 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.example.uiautomator.uiAutoMator', 'com.example.uiautomator.test/androidx.test.runner.AndroidJUnitRunner']
@@ -442,7 +453,55 @@ task runParallelTestsForInstall {
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
     }
 }
-task gitPullOriginMain {
+tasks.register('runParallelTestsForInstall') {
+    doLast {
+        // 연결된 디바이스 목록 가져오기
+        def deviceList = []
+        "adb devices".execute().text.eachLine { line ->
+            if (line.endsWith("device")) {
+                def device = line.split()[0]
+                deviceList.add(device)
+            }
+        }
+
+        // 디바이스가 없으면 경고 메시지 출력 후 종료
+        if (deviceList.isEmpty()) {
+            println "No connected devices found."
+            return
+        }
+
+        // 병렬 처리를 위한 ExecutorService 생성
+        def executor = Executors.newFixedThreadPool(deviceList.size())
+
+        // 초기 지연 시간
+        def initialDelay = 0
+        // 테스트 간격 (15초)
+        def testInterval = 15
+
+        // 병렬 테스트 실행
+        deviceList.each { device ->
+            executor.scheduleWithFixedDelay({
+                try {
+                    // 테스트 실행
+                    def testCommand = ['adb', '-s', device, 'shell', 'am', 'instrument', '-w', '-e', 'class', 'com.example.uiautomator.uiAutoMator', 'com.example.uiautomator.test/androidx.test.runner.AndroidJUnitRunner']
+                    def testProc = testCommand.execute()
+                    testProc.waitFor()
+                    println "Device $device: " + testProc.in.text
+                } catch (Exception e) {
+                    println "Failed to run test on device $device: $e.message"
+                }
+            }, initialDelay, testInterval, TimeUnit.SECONDS)
+
+            // 초기 지연 시간 업데이트 (15초 간격으로)
+            initialDelay += testInterval
+        }
+
+        // 모든 작업이 완료될 때까지 기다림
+        executor.shutdown()
+        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+    }
+}
+tasks.register('gitPullOriginMain') {
     doLast {
         def grgit = grgit.open(dir: file('../'))
 
@@ -481,22 +540,40 @@ def generateIpList(String startIp, String endIp) {
     }
     return ips
 }
-task runWifiConfigTests {
+
+tasks.register('runWifiConfigTests') {
+
     doLast {
+        // 로그 파일 경로 설정
+        def logFilePath = "${project.buildDir}/logs/runWifiConfigTests.log"
+        def logFile = new File(logFilePath)
+        // 로그 파일의 디렉토리가 없으면 생성
+        if (!logFile.parentFile.exists()) {
+            logFile.parentFile.mkdirs()
+        }
+        BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true))
+        writer.write('runWifiConfigTests 시작\n')
         // IP 주소 범위와 디바이스 목록을 설정
         def ipRange = project.hasProperty('ipRange') ? project.property('ipRange') : "192.168.0.1-192.168.0.5"
         def (startIp, endIp) = ipRange.split('-')
         def ipList = generateIpList(startIp, endIp)
         def deviceList = project.hasProperty('deviceList') ? project.property('deviceList').split(",") : []
-
-        def gateway = "211.50.174.129"
-        def dns1 = "203.248.252.2"
-        def dns2 = "164.124.101.2"
+        def wifiName = project.property('wifiName')
+        def wifiPassword = project.property('wifiPassword')
+        def gateway = project.property('gateway')
+        def maskbit = project.property('maskbit')
+        def dns1 = project.property('dns1')
+        def dns2 = project.property('dns2')
         def testClass = "com.example.uiautomator.wifiRunConfig"
         def testPackage = "com.example.uiautomator.test"
 
         // ExecutorService를 사용하여 디바이스 목록 크기에 맞는 스레드 풀을 생성
         def executor = Executors.newFixedThreadPool(deviceList.size())
+
+
+        // 예를 들어, 디바이스 리스트 및 IP 범위 로깅
+        writer.write("디바이스 목록: ${deviceList.join(', ')}\n")
+        writer.write("IP 범위: ${ipRange}\n")
 
         // 각 디바이스와 IP에 대한 테스트를 병렬로 실행
         deviceList.eachWithIndex { device, index ->
@@ -505,22 +582,134 @@ task runWifiConfigTests {
                 try {
                     def ip = ipList.size() > index ? ipList[index] : ""
 
-                    def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
-                    def uninstallProc = uninstallCommand.execute()
-                    uninstallProc.waitFor()
-                    if (uninstallProc.exitValue() != 0) {
-                        println "Failed to uninstallProc on device $device"
-                        return
-                    }
-        //                    // 기존 APK 제거
-                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
-                    def uninstallMainProc = uninstallMainCommand.execute()
-                    uninstallMainProc.waitFor()
-                    if (uninstallMainProc.exitValue() != 0) {
-                        println "Failed to uninstallMainProc on device $device"
-                        return
-                    }
+//                    def uninstallCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator.test']
+//                    def uninstallProc = uninstallCommand.execute()
+//                    uninstallProc.waitFor()
+//                    if (uninstallProc.exitValue() != 0) {
+//                        println "Failed to uninstallProc on device $device"
+//                        return
+//                    }
+//
+//                    def uninstallMainCommand = ['adb', '-s', device, 'uninstall', 'com.example.uiautomator']
+//                    def uninstallMainProc = uninstallMainCommand.execute()
+//                    uninstallMainProc.waitFor()
+//                    if (uninstallMainProc.exitValue() != 0) {
+//                        println "Failed to uninstallMainProc on device $device"
+//                        return
+//                    }
                     // APK 파일 설치 Main
+//                    def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
+//                    def installMainProc = installMainCommand.execute()
+//                    installMainProc.waitFor()
+//                    if (installMainProc.exitValue() != 0) {
+//                        println "Failed to install main APK on device $device"
+//                        return
+//                    }
+
+                    // APK 파일 설치 TEST
+//                    def installTestCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
+//                    def installTestProc = installTestCommand.execute()
+//                    installTestProc.waitFor()
+//                    if (installTestProc.exitValue() != 0) {
+//                        println "Failed to install test APK on device $device"
+//                        return
+//                    }
+
+                    // ADB 명령 구성
+                    def command = "adb -s ${device} shell am instrument -w -e wifiName \"${wifiName}\" -e wifiPassword \"${wifiPassword}\" -e ip \"${ip}\" -e gateway \"${gateway}\" -e maskbit \"${maskbit}\"  -e dns1 \"${dns1}\" -e dns2 \"${dns2}\" -e class ${testClass} ${testPackage}/androidx.test.runner.AndroidJUnitRunner"
+                    def testProc = command.execute()
+                    testProc.waitFor()
+                    println "Device $device: " + testProc.in.text
+                } catch (Exception e) {
+                    println "Failed to run test on device $device: $e.message"
+                    writer.write("오류 발생: ${e.message}\n")
+                }finally {
+                    writer.close() // BufferedWriter 닫기
+                }
+
+            }
+        }
+        executor.shutdown()
+        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+        // 모든 테스트 실행이 완료될 때까지 기다림
+    }
+}
+
+tasks.register('runGoogleAccountTest') {
+
+    doLast {
+        def deviceList = project.hasProperty('deviceList') ? project.property('deviceList').split(",") : []
+        // ExecutorService를 사용하여 디바이스 목록 크기에 맞는 스레드 풀을 생성
+        def executor = Executors.newFixedThreadPool(deviceList.size())
+        def testClass = "com.example.uiautomator.uiAutoMatorAccountChange"
+        def testPackage = "com.example.uiautomator.test"
+        // 각 디바이스와 IP에 대한 테스트를 병렬로 실행
+        deviceList.eachWithIndex { device, index ->
+            // ExecutorService를 사용하여 병렬 실행
+            executor.execute {
+                try {
+                    // APK 파일 설치 Main
+//                    def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
+//                    def installMainProc = installMainCommand.execute()
+//                    installMainProc.waitFor()
+//                    if (installMainProc.exitValue() != 0) {
+//                        println "Failed to install main APK on device $device"
+//                        return
+//                    }
+
+                    // APK 파일 설치 TEST
+//                    def installTestCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
+//                    def installTestProc = installTestCommand.execute()
+//                    installTestProc.waitFor()
+//                    if (installTestProc.exitValue() != 0) {
+//                        println "Failed to install test APK on device $device"
+//                        return
+//                    }
+
+                    // ADB 명령 구성
+                    def command = "adb -s ${device} shell am instrument -w -e class ${testClass} ${testPackage}/androidx.test.runner.AndroidJUnitRunner"
+                    def testProc = command.execute()
+                    testProc.waitFor()
+                    println "Device $device: " + testProc.in.text
+                } catch (Exception e) {
+                    println "Failed to run test on device $device: $e.message"
+                }
+
+
+            }
+        }
+        executor.shutdown()
+        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+        // 모든 테스트 실행이 완료될 때까지 기다림
+    }
+}
+
+tasks.register('runScreenLockDiable') {
+
+    doLast {
+        // 로그 파일 경로 설정
+        def logFilePath = "${project.buildDir}/logs/runScreenLockDiable.log"
+        def logFile = new File(logFilePath)
+        // 로그 파일의 디렉토리가 없으면 생성
+        if (!logFile.parentFile.exists()) {
+            logFile.parentFile.mkdirs()
+        }
+        BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true))
+        writer.write('runScreenLockDiable 시작\n')
+        def deviceList = project.hasProperty('deviceList') ? project.property('deviceList').split(",") : []
+        // ExecutorService를 사용하여 디바이스 목록 크기에 맞는 스레드 풀을 생성
+        def executor = Executors.newFixedThreadPool(deviceList.size())
+        def testClass = "com.example.uiautomator.screenLock"
+        def testPackage = "com.example.uiautomator.test"
+
+        writer.write("디바이스 목록: ${deviceList.join(', ')}\n")
+
+        // 각 디바이스와 IP에 대한 테스트를 병렬로 실행
+        deviceList.eachWithIndex { device, index ->
+            // ExecutorService를 사용하여 병렬 실행
+            executor.execute {
+                try {
+//                     APK 파일 설치 Main
                     def installMainCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/debug/app-debug.apk']
                     def installMainProc = installMainCommand.execute()
                     installMainProc.waitFor()
@@ -529,7 +718,7 @@ task runWifiConfigTests {
                         return
                     }
 
-                    // APK 파일 설치 TEST
+//                     APK 파일 설치 TEST
                     def installTestCommand = ['adb', '-s', device, 'install', '-r', './app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk']
                     def installTestProc = installTestCommand.execute()
                     installTestProc.waitFor()
@@ -539,7 +728,7 @@ task runWifiConfigTests {
                     }
 
                     // ADB 명령 구성
-                    def command = "adb -s ${device} shell am instrument -w -e ip \"${ip}\" -e gateway \"${gateway}\" -e dns1 \"${dns1}\" -e dns2 \"${dns2}\" -e class ${testClass} ${testPackage}/androidx.test.runner.AndroidJUnitRunner"
+                    def command = "adb -s ${device} shell am instrument -w -e class ${testClass} ${testPackage}/androidx.test.runner.AndroidJUnitRunner"
                     def testProc = command.execute()
                     testProc.waitFor()
                     println "Device $device: " + testProc.in.text

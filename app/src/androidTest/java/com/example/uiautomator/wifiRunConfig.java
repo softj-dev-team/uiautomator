@@ -1,6 +1,7 @@
 package com.example.uiautomator;
 
 import android.os.Bundle;
+import android.os.RemoteException;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -15,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
@@ -25,12 +27,29 @@ public class wifiRunConfig {
         device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
     }
     @Test
-    public void configStart() throws InterruptedException, UiObjectNotFoundException {
+    public void configStart() throws InterruptedException, UiObjectNotFoundException, RemoteException, IOException {
+
+
+        Bundle arguments = InstrumentationRegistry.getArguments();
+        String wifiName = arguments.getString("wifiName");
+        String wifiPassword = arguments.getString("wifiPassword");
+        String maskbit = arguments.getString("maskbit");
+        String ip = arguments.getString("ip");
+        String gateway = arguments.getString("gateway");
+        String dns1 = arguments.getString("dns1");
+        String dns2 = arguments.getString("dns2");
+
         // WiFi 설정 화면 열기
         device.pressHome();
-        device.openQuickSettings();
-        device.findObject(new UiSelector().textContains("Wi-Fi")).click();
-        Thread.sleep(1000);
+        // 앱 드로어(모든 앱이 보이는 화면) 열기
+        device.pressRecentApps();
+        // 설정 앱 실행
+        device.executeShellCommand("am start -a android.settings.SETTINGS");
+        Thread.sleep(3000);
+        device.findObject(By.text("연결")).click();
+        Thread.sleep(3000);
+        device.findObject(By.text("Wi-Fi")).click();
+        Thread.sleep(3000);
         UiObject2 advancedSettings = device.findObject(By.text("상세설정"));
         if (advancedSettings != null) {
             advancedSettings.click();
@@ -46,7 +65,7 @@ public class wifiRunConfig {
         List<UiObject2> editTexts = device.findObjects(By.res("com.android.settings:id/edittext"));
 
         UiObject2 editText = device.findObject(By.res("com.android.settings:id/edittext"));
-        editText.setText("esaydroid5G");
+        editText.setText(wifiName);
 
         // 스피너 클릭
         UiObject2 spinner = device.findObject(By.res("com.android.settings:id/spinner"));
@@ -65,7 +84,7 @@ public class wifiRunConfig {
         }
         List<UiObject2> editTexts2 = device.findObjects(By.res("com.android.settings:id/edittext"));
         UiObject2 editTextsPass = editTexts2.get(1);
-        editTextsPass.setText("!1qazsoftj");
+        editTextsPass.setText(wifiPassword);
 
         UiObject2 hightOption = device.wait(Until.findObject(By.text("고급")), 2000);
 
@@ -83,17 +102,10 @@ public class wifiRunConfig {
 
         Thread.sleep(2000);
 
-
-        Bundle arguments = InstrumentationRegistry.getArguments();
-        String ip = arguments.getString("ip");
-        String gateway = arguments.getString("gateway");
-        String dns1 = arguments.getString("dns1");
-        String dns2 = arguments.getString("dns2");
-
-
         List<UiObject2> editTextsIp = device.findObjects(By.res("com.android.settings:id/edittext"));
         editTextsIp.get(0).setText(ip);
         editTextsIp.get(1).setText(gateway);
+        editTextsIp.get(2).setText(maskbit);
         editTextsIp.get(3).setText(dns1);
         editTextsIp.get(4).setText(dns2);
         Thread.sleep(2000);
